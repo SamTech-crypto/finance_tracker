@@ -1,21 +1,24 @@
-# Python bytecode
+# Python cache
 __pycache__/
 *.py[cod]
-*.so
-*.egg
-*.egg-info/
-dist/
-build/
 
-# Streamlit
-.streamlit/
-*.pdf
-*.csv
+# Virtual environments
+.venv/
+env/
+venv/
 
 # OS files
 .DS_Store
 Thumbs.db
 
-# IDEs
+# Jupyter/IPython
+.ipynb_checkpoints/
+
+# Streamlit cache & configs
+.streamlit/
+*.pdf
+*.csv
+
+# IDE configs
 .vscode/
 .idea/
