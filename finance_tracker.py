@@ -15,6 +15,13 @@ warnings.filterwarnings("ignore")
 def generate_mock_data(start_date="2023-01-01", end_date="2025-12-31"):
     dates = pd.date_range(start_date, end_date, freq="D")
     np.random.seed(42)
+
+    categories = [
+        "Rent/Mortgage", "Groceries", "Utilities", "Transportation", "Insurance",
+        "Healthcare", "Subscriptions", "Education", "Childcare", "Clothing",
+        "Dining Out", "Entertainment", "Savings", "Donations", "Miscellaneous"
+    ]
+
     data = {
         "Date": dates,
         "Income": np.where(np.random.rand(len(dates)) < 0.1,
@@ -23,9 +30,10 @@ def generate_mock_data(start_date="2023-01-01", end_date="2025-12-31"):
         "Investment_Contribution": np.where(np.random.rand(len(dates)) < 0.05,
                                             np.random.normal(500, 100, len(dates)), 0),
         "Investment_Value": np.cumsum(np.random.normal(10000, 1000, len(dates))),
-        "Expenses_Category": np.random.choice(["Rent", "Groceries", "Entertainment"], len(dates)),
+        "Expenses_Category": np.random.choice(categories, len(dates)),
         "Currency": "USD"
     }
+
     df = pd.DataFrame(data)
     df["Net_Balance"] = df["Income"] - df["Expenses"] + df["Investment_Value"].diff().fillna(0)
     return df
@@ -75,7 +83,6 @@ st.title("📊 Household Finance Tracker & Forecaster")
 st.sidebar.markdown("### Data Source")
 use_uploaded = st.sidebar.toggle("Use uploaded CSV file", False)
 
-# Sample template for download
 template = {
     "Date": "2024-01-01",
     "Income": 2000,
@@ -90,7 +97,6 @@ if st.sidebar.button("📥 Download CSV Template"):
     template_df = pd.DataFrame([template])
     st.download_button("Download Template CSV", template_df.to_csv(index=False), file_name="finance_template.csv")
 
-# Load or Upload Data
 start_date = st.sidebar.date_input("Start Date", pd.to_datetime("2023-01-01"))
 end_date = st.sidebar.date_input("End Date", pd.to_datetime("2025-12-31"))
 
@@ -136,7 +142,14 @@ st.plotly_chart(plot_forecast(monthly_balance, forecast), use_container_width=Tr
 # Budget Comparison
 # -----------------------------
 with st.expander("📉 Budget vs Actual Spending"):
-    budgets = {"Rent": 1500, "Groceries": 600, "Entertainment": 400}
+    budgets = {
+        "Rent/Mortgage": 1200, "Groceries": 500, "Utilities": 150,
+        "Transportation": 200, "Insurance": 250, "Healthcare": 100,
+        "Subscriptions": 50, "Education": 300, "Childcare": 400,
+        "Clothing": 100, "Dining Out": 150, "Entertainment": 100,
+        "Savings": 500, "Donations": 75, "Miscellaneous": 100
+    }
+
     monthly_cat = df.groupby([pd.Grouper(key="Date", freq="M"), "Expenses_Category"])["Expenses"].sum().unstack().fillna(0)
     st.write("### Actual Monthly Spending")
     st.line_chart(monthly_cat)
