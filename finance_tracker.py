@@ -7,6 +7,47 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # -----------------------------
+# Custom CSS for App Styling
+# -----------------------------
+st.markdown("""
+    <style>
+        .reportview-container {
+            background-color: #f5f5f5;
+        }
+        .sidebar .sidebar-content {
+            background-color: #2e3d49;
+            color: white;
+        }
+        .sidebar .sidebar-header {
+            background-color: #2c3e50;
+        }
+        .sidebar .sidebar-menu a {
+            color: #ecf0f1;
+        }
+        .streamlit-expanderHeader {
+            font-weight: bold;
+        }
+        .streamlit-expanderContent {
+            color: #2c3e50;
+        }
+        .stButton>button {
+            background-color: #2ecc71;
+            color: white;
+            font-weight: bold;
+        }
+        .stButton>button:hover {
+            background-color: #27ae60;
+        }
+        h1 {
+            color: #2980b9;
+        }
+        h2, h3 {
+            color: #34495e;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# -----------------------------
 # Mock Data Generator
 # -----------------------------
 @st.cache_data
@@ -77,7 +118,7 @@ start_date = st.sidebar.date_input("Start Date", pd.to_datetime("2023-01-01"))
 end_date = st.sidebar.date_input("End Date", pd.to_datetime("2025-12-31"))
 forecast_months = st.sidebar.slider("Forecast Months", 3, 24, 12)
 
-# Load data
+# Load data (disable caching for regeneration on each refresh)
 df = generate_mock_data(start_date, end_date)
 df = validate_data(df)
 
