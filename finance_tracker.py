@@ -3,8 +3,11 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.tsa.holtwinters import ExponentialSmoothing
+from fbprophet import Prophet
 import warnings
-from fpdf import FPDF  # For PDF export
+from fpdf import FPDF
+from io import StringIO
 warnings.filterwarnings("ignore")
 
 # -----------------------------
@@ -82,13 +85,28 @@ def validate_data(df):
     return df
 
 # -----------------------------
-# Forecasting
+# Forecasting Functions
 # -----------------------------
-def forecast_balance(df, months=12):
+def forecast_balance(df, model_choice='ARIMA', months=12):
     monthly_balance = df.resample("M", on="Date")["Net_Balance"].sum()
-    model = ARIMA(monthly_balance, order=(1, 1, 1))
-    fit = model.fit()
-    forecast = fit.forecast(steps=months)
+
+    if model_choice == 'ARIMA':
+        model = ARIMA(monthly_balance, order=(1, 1, 1))
+        fit = model.fit()
+        forecast = fit.forecast(steps=months)
+
+    elif model_choice == 'Exponential Smoothing':
+        model = ExponentialSmoothing(monthly_balance, trend='add', seasonal='add', seasonal_periods=12)
+        fit = model.fit()
+        forecast = fit.forecast(steps=months)
+
+    elif model_choice == 'Prophet':
+        prophet_df = monthly_balance.reset_index()
+        prophet_df.columns = ['ds', 'y']
+        model = Prophet(yearly_seasonality=True)
+        model.fit(prophet_df)
+        future = model.make_future_dataframe(prophet_df, periods=months, freq='M')
+        forecast = model.predict(future)['yhat'][-months:]
 
     forecast_dates = pd.date_range(monthly_balance.index[-1], periods=months+1, freq="M")[1:]
     return pd.Series(forecast, index=forecast_dates), monthly_balance
@@ -118,6 +136,7 @@ st.markdown("This app generates mock financial data, validates it, and forecasts
 start_date = st.sidebar.date_input("Start Date", pd.to_datetime("2023-01-01"))
 end_date = st.sidebar.date_input("End Date", pd.to_datetime("2025-12-31"))
 forecast_months = st.sidebar.slider("Forecast Months", 3, 24, 12)
+forecast_model = st.sidebar.selectbox("Choose Forecast Model", ["ARIMA", "Exponential Smoothing", "Prophet"])
 
 # Load data: Upload CSV or Generate Mock
 st.sidebar.markdown("### Data Source")
@@ -156,7 +175,7 @@ df = validate_data(df)
 currency_rates = {
     "USD": 1, "EUR": 1.07, "KES": 0.0068, "UGX": 0.00027, 
     "NGN": 0.0024, "GBP": 1.35, "RWF": 0.00091
-}  # Example rates
+}
 
 default_currency = st.sidebar.selectbox("Convert to Currency", list(currency_rates.keys()), index=0)
 
@@ -178,12 +197,14 @@ with st.expander("🔍 Show Raw Data"):
 # -----------------------------
 # Forecast
 # -----------------------------
-forecast, monthly_balance = forecast_balance(df, forecast_months)
+forecast, monthly_balance = forecast_balance(df, forecast_model, forecast_months)
 
 # Plot
 st.plotly_chart(plot_forecast(monthly_balance, forecast), use_container_width=True)
 
-# Optional: Show category spending
+# -----------------------------
+# Expense Category Breakdown
+# -----------------------------
 with st.expander("📂 Expense Category Breakdown"):
     category_summary = df.groupby("Expenses_Category")["Expenses"].sum()
     st.bar_chart(category_summary)
@@ -193,7 +214,6 @@ with st.expander("📂 Expense Category Breakdown"):
 # -----------------------------
 with st.expander("📉 Budget vs Actual Spending"):
     budgets = {"Rent": 1500, "Groceries": 600, "Entertainment": 400}
-
     monthly_cat = df.groupby([pd.Grouper(key="Date", freq="M"), "Expenses_Category"])["Expenses"].sum().unstack().fillna(0)
     st.write("### Actual Monthly Spending")
     st.line_chart(monthly_cat)
@@ -224,9 +244,10 @@ with st.expander("📤 Export Summary"):
             line = f"{idx.strftime('%Y-%m')}: Income: {row['Income']:.2f}, Expenses: {row['Expenses']:.2f}, Net: {row['Net_Balance']:.2f}"
             pdf.cell(200, 10, txt=line, ln=1)
 
-        pdf.output("finance_summary.pdf")
-        with open("finance_summary.pdf", "rb") as f:
-            st.download_button("Download PDF Summary", f, file_name="finance_summary.pdf")
+        pdf_output = StringIO()
+        pdf.output(pdf_output)
+        st.download_button("Download PDF Summary", pdf_output.getvalue(), file_name="finance_summary.pdf")
+
     except ImportError:
         st.warning("PDF export requires installing `fpdf` package. Run `pip install fpdf`.")
 
