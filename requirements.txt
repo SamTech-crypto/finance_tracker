@@ -1,6 +1,6 @@
-streamlit
-pandas
-numpy
-plotly
-statsmodels
-fpdf
+streamlit>=1.32
+pandas>=2.0
+numpy>=1.24
+plotly>=5.18
+statsmodels>=0.14
+fpdf>=1.7
