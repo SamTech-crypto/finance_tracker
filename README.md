@@ -1,11 +1,19 @@
-# 💸 Household Finance Tracker (Streamlit App)
+# Household Finance Tracker & Forecaster
 
-A Streamlit-based finance tracker that allows you to:
-- Upload your own CSV financial data or generate mock data
-- Convert multiple currencies (USD, UGX, KES, EUR, GBP, NGN, RWF)
-- Forecast net balance using ARIMA
-- Compare actual vs budgeted expenses
-- Export summaries as CSV or PDF
+This is a Streamlit-based finance tracker for analyzing and forecasting personal or household financial performance.
 
-## 🚀 Getting Started
+---
+
+## 🔧 Features
+
+- 📅 Generate or upload daily financial data
+- 💸 Multi-currency support (USD, EUR, GBP, KES, UGX, RWF, NGN)
+- 📈 Monthly net balance forecast using ARIMA
+- 🧾 Expense category breakdown
+- 📊 Budget vs. actual comparison
+- ⬇ Export reports to CSV and PDF
+- 🧠 Works with uploaded CSVs or auto-generated mock data
+
+---
+
 
